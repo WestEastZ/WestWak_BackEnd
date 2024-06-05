@@ -6,7 +6,6 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class AuthService {
   constructor(private UserRepository: UserRepository) {}
-
   signUp(UserDto: UserDto): Promise<void> {
     return this.UserRepository.createUser(UserDto);
   }
