@@ -7,6 +7,7 @@ import { UserRepository } from './user.repository';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { TokenService } from './token/token.service';
 
 @Module({
   imports: [
@@ -15,13 +16,15 @@ import { ConfigService } from '@nestjs/config';
       inject: [ConfigService],
       global: true,
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: 60 * 60 },
+        // secret: config.get<string>('JWT_ACCESS_TOKEN'),
+        // signOptions: {
+        //   expiresIn: config.get<string>('JWT_ACCESS_TOKEN_EXPIRATION_TIME'),
+        // },
       }),
     }),
     TypeOrmModule.forFeature([User]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserRepository],
+  providers: [AuthService, UserRepository, TokenService],
 })
 export class AuthModule {}
