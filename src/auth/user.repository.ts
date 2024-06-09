@@ -12,10 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
-  constructor(
-    private dataSource: DataSource,
-    private jwtService: JwtService,
-  ) {
+  constructor(private dataSource: DataSource) {
     super(User, dataSource.createEntityManager());
   }
 
@@ -36,22 +33,6 @@ export class UserRepository extends Repository<User> {
       } else {
         throw new InternalServerErrorException();
       }
-    }
-  }
-
-  // 로그인
-  async signin(UserDto: UserDto): Promise<{ accessToken: string }> {
-    const { username, password } = UserDto;
-
-    const user = await this.findOne({ where: { username } });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const payload = { username };
-      const accessToken = await this.jwtService.sign(payload);
-
-      return { accessToken };
-    } else {
-      throw new UnauthorizedException('Login failed');
     }
   }
 }
