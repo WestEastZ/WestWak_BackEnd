@@ -1,6 +1,6 @@
 import { UserDto } from './dto/user.dto';
 import { User } from './entity/user.entity';
-import { TokenService } from './token/token.service';
+import { JwtTokenService } from './token/jwt.service';
 import { UserRepository } from './user.repository';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
@@ -9,7 +9,7 @@ import * as bcrypt from 'bcryptjs';
 export class AuthService {
   constructor(
     private UserRepository: UserRepository,
-    private TokenService: TokenService,
+    private JwtTokenService: JwtTokenService,
   ) {}
 
   // 회원가입
@@ -20,17 +20,37 @@ export class AuthService {
   // 로그인
   async signin(
     UserDto: UserDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{ accessToken: string; currentRefreshToken: string }> {
     const { username, password } = UserDto;
 
     const user = await this.UserRepository.findOne({ where: { username } });
 
     if (user && (await bcrypt.compare(password, user.password))) {
-      const accessToken = await this.TokenService.getAccessToken(username);
-      const refreshToken = await this.TokenService.getRefreshToken(username);
-      return { accessToken, refreshToken };
+      const accessToken = await this.JwtTokenService.getAccessToken(username);
+      const { currentRefreshToken, currentRefreshTokenExp } =
+        await this.JwtTokenService.getRefreshToken(username);
+
+      // 유저 Refresh 토큰 수정
+      await this.UserRepository.update(
+        { username },
+        {
+          currentRefreshToken,
+          currentRefreshTokenExp,
+        },
+      );
+
+      return { accessToken, currentRefreshToken };
     } else {
       throw new UnauthorizedException('Login failed');
     }
+  }
+
+  // 유저 조회 (인가)
+  async findUser(username: string): Promise<User> {
+    const verifiedUser = await this.UserRepository.findOne({
+      where: { username },
+    });
+
+    return verifiedUser;
   }
 }
