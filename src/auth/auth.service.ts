@@ -20,26 +20,27 @@ export class AuthService {
   // 로그인
   async signin(
     UserDto: UserDto,
-  ): Promise<{ accessToken: string; currentRefreshToken: string }> {
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const { username, password } = UserDto;
 
     const user = await this.UserRepository.findOne({ where: { username } });
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const accessToken = await this.JwtTokenService.getAccessToken(username);
-      const { currentRefreshToken, currentRefreshTokenExp } =
+      const { refreshToken, refreshTokenExp } =
         await this.JwtTokenService.getRefreshToken(username);
 
       // 유저 Refresh 토큰 수정
       await this.UserRepository.update(
         { username },
         {
-          currentRefreshToken,
-          currentRefreshTokenExp,
+          refreshToken:
+            await this.JwtTokenService.getRefreshTokenHash(refreshToken),
+          refreshTokenExp,
         },
       );
 
-      return { accessToken, currentRefreshToken };
+      return { accessToken, refreshToken };
     } else {
       throw new UnauthorizedException('Login failed');
     }

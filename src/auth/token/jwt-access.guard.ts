@@ -3,11 +3,8 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { request } from 'http';
-import { HttpErrorByCode } from '@nestjs/common/utils/http-error-by-code.util';
 import { ConfigService } from '@nestjs/config';
 
 /**

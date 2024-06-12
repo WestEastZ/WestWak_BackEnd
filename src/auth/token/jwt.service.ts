@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
@@ -21,19 +21,18 @@ export class JwtTokenService {
     return token;
   }
 
-  // Refresh 토큰
+  // Refresh 토큰 발급
   async getRefreshToken(username: string) {
     const payload = { username };
 
-    const token = this.jwtService.sign(payload, {
+    const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_REFRESH_TOKEN'),
       expiresIn: this.configService.get<string>('JWT_REFRESH_TIME'),
     });
 
-    const currentRefreshToken = await this.getRefreshTokenHash(token);
-    const currentRefreshTokenExp = await this.getRefreshTokenExp();
+    const refreshTokenExp = await this.getRefreshTokenExp();
 
-    return { currentRefreshToken, currentRefreshTokenExp };
+    return { refreshToken, refreshTokenExp };
   }
 
   // Refresh 토큰 해시

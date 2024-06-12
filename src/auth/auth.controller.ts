@@ -1,3 +1,4 @@
+import { JwtTokenService } from './token/jwt.service';
 import { AuthService } from './auth.service';
 import {
   Body,
@@ -13,10 +14,14 @@ import { UserDto } from './dto/user.dto';
 import { JwtAccessGuard } from './token/jwt-access.guard';
 import { Response } from 'express';
 import { User } from './entity/user.entity';
+import { JwtRfreshGuard } from './token/jwt-refresh.guard';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private AuthService: AuthService) {}
+  constructor(
+    private AuthService: AuthService,
+    private JwtTokenService: JwtTokenService,
+  ) {}
 
   // 회원가입
   @Post('/signup')
@@ -35,14 +40,14 @@ export class AuthController {
     res.cookie('access_token', `Bearer ${tokens.accessToken}`, {
       httpOnly: true,
     });
-    res.cookie('refresh_token', tokens.currentRefreshToken, {
+    res.cookie('refresh_token', tokens.refreshToken, {
       httpOnly: true,
     });
 
     return {
       message: 'login',
       access_token: tokens.accessToken,
-      refresh_token: tokens.currentRefreshToken,
+      refresh_token: tokens.refreshToken,
     };
   }
 
@@ -54,5 +59,23 @@ export class AuthController {
     const verifiedUser: User = await this.AuthService.findUser(username);
 
     return res.send(verifiedUser);
+  }
+
+  // refresh 토큰 재발급
+  @Post('/refresh')
+  @UseGuards(JwtRfreshGuard)
+  async refresh(@Req() req: any, @Res({ passthrough: true }) res: Response) {
+    const newAccessToken = await this.JwtTokenService.getAccessToken(
+      req.user.username,
+    );
+
+    res.cookie('access_token', `Bearer ${newAccessToken}`, {
+      httpOnly: true,
+    });
+
+    return {
+      message: 'new Access Token',
+      access_token: newAccessToken,
+    };
   }
 }
