@@ -2,6 +2,7 @@ import { User } from 'src/auth/entity/user.entity';
 import {
   BaseEntity,
   Column,
+  DeleteDateColumn,
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -23,4 +24,7 @@ export class Board extends BaseEntity {
     eager: false,
   })
   user: User;
+
+  @DeleteDateColumn()
+  deletedAt: Date | null;
 }
