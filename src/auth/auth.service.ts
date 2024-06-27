@@ -13,14 +13,17 @@ export class AuthService {
   ) {}
 
   // 회원가입
-  signUp(UserDto: UserDto): Promise<void> {
+  signUp(UserDto: UserDto): Promise<{ username: string; message: string }> {
     return this.UserRepository.createUser(UserDto);
   }
 
   // 로그인
-  async signin(
-    UserDto: UserDto,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  async signin(UserDto: UserDto): Promise<{
+    username: string;
+    accessToken: string;
+    refreshToken: string;
+    message: string;
+  }> {
     const { username, password } = UserDto;
 
     const user = await this.UserRepository.findOne({ where: { username } });
@@ -40,7 +43,12 @@ export class AuthService {
         },
       );
 
-      return { accessToken, refreshToken };
+      return {
+        username,
+        accessToken,
+        refreshToken,
+        message: '로그인 되었습니다',
+      };
     } else {
       throw new UnauthorizedException('Login failed');
     }
