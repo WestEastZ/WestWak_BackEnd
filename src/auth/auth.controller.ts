@@ -25,7 +25,9 @@ export class AuthController {
 
   // 회원가입
   @Post('/signup')
-  signup(@Body(ValidationPipe) UserDto: UserDto): Promise<void> {
+  signup(
+    @Body(ValidationPipe) UserDto: UserDto,
+  ): Promise<{ username: string; message: string }> {
     return this.AuthService.signUp(UserDto);
   }
 
@@ -35,19 +37,20 @@ export class AuthController {
     @Body(ValidationPipe) UserDto: UserDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<any> {
-    const tokens = await this.AuthService.signin(UserDto);
+    const response = await this.AuthService.signin(UserDto);
 
-    res.cookie('access_token', `Bearer ${tokens.accessToken}`, {
+    res.cookie('access_token', `Bearer ${response.accessToken}`, {
       httpOnly: true,
     });
-    res.cookie('refresh_token', tokens.refreshToken, {
+    res.cookie('refresh_token', response.refreshToken, {
       httpOnly: true,
     });
 
     return {
-      message: 'login',
-      access_token: tokens.accessToken,
-      refresh_token: tokens.refreshToken,
+      username: response.username,
+      access_token: response.accessToken,
+      refresh_token: response.refreshToken,
+      message: response.message,
     };
   }
 

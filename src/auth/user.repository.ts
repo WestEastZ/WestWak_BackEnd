@@ -17,7 +17,9 @@ export class UserRepository extends Repository<User> {
   }
 
   // 회원가입
-  async createUser(UserDto: UserDto): Promise<void> {
+  async createUser(
+    UserDto: UserDto,
+  ): Promise<{ username: string; message: string }> {
     const { username, password } = UserDto;
 
     const salt = await bcrypt.genSalt();
@@ -27,6 +29,7 @@ export class UserRepository extends Repository<User> {
 
     try {
       await this.save(user);
+      return { username, message: '회원가입 되었습니다.' };
     } catch (error) {
       if (error.code === '23505') {
         throw new ConflictException('Existing username');
