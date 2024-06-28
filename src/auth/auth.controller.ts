@@ -41,9 +41,15 @@ export class AuthController {
 
     res.cookie('access_token', `Bearer ${response.accessToken}`, {
       httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      maxAge: 300000,
     });
     res.cookie('refresh_token', response.refreshToken, {
       httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      maxAge: 300000,
     });
 
     return {
