@@ -41,14 +41,15 @@ export class AuthController {
 
     res.cookie('access_token', `Bearer ${response.accessToken}`, {
       httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      maxAge: 300000,
     });
     res.cookie('refresh_token', response.refreshToken, {
       httpOnly: true,
+      sameSite: 'none',
+      secure: true,
       maxAge: 300000,
-      // 여기다가 maxAge 작성하기
-      // 현재 새로고침하면 쿠키 사라지는 현상있음
-      // 스택 오버플로우 봤을 때 maxAge 작성안하면
-      // 세션 쿠키로 인식되어서 사라진다고 함
     });
 
     return {
