@@ -5,6 +5,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
@@ -20,7 +21,13 @@ export class JwtRfreshGuard implements CanActivate {
   async canActivate(context: ExecutionContext) {
     try {
       const request = context.switchToHttp().getRequest();
-      const refresh_token = request.cookies['refresh_token'];
+      Logger.log(
+        `Received request: ${request.method} ${request.url} ${request.cookies['refresh_token']}`,
+      );
+
+      // const refresh_token = request.cookies['refresh_token'];
+      const refresh_token = request.headers.authorization;
+      Logger.log(refresh_token);
 
       // refresh_token 유무 확인
       if (!refresh_token) {

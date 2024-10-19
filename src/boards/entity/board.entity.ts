@@ -15,10 +15,19 @@ export class Board extends BaseEntity {
   id: number;
 
   @Column()
-  description: string;
+  username: string;
 
   @Column()
+  userId: number;
+
+  @Column()
+  description: string;
+
+  @Column({ default: 'PUBLIC' })
   status: BoardStatus;
+
+  @Column()
+  createdAt: string | null;
 
   @ManyToOne((type) => User, (user) => user.boards, {
     eager: false,

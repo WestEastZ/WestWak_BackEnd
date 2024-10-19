@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 
 @Injectable()
@@ -12,8 +13,13 @@ export class OwnershipGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+
+    Logger.log(
+      `Received request: ${request.method} ${request.url} ${request.params.id} ${request.user.username}`,
+    );
+
     const user = request.user;
-    const boardId = request.params.id;
+    const boardId = parseInt(request.params.id, 10);
 
     const board = await this.BoardRepository.findOne({
       where: { id: boardId },

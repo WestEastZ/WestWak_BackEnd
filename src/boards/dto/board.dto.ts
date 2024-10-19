@@ -1,4 +1,4 @@
-import { IS_IN, IsNotEmpty, IsString } from 'class-validator';
+import { IS_IN, IsEnum, IsIn, IsNotEmpty, IsString } from 'class-validator';
 import { BoardStatus } from '../board.model';
 import { Transform } from 'class-transformer';
 import { BeforeInsert, BeforeUpdate } from 'typeorm';
@@ -8,5 +8,8 @@ export class BoardDto {
   @IsString()
   description: string;
 
-  status?: BoardStatus;
+  @IsNotEmpty()
+  @IsString()
+  @IsIn(['PUBLIC', 'PRIVATE'] as BoardStatus[])
+  status: BoardStatus;
 }

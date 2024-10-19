@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
@@ -30,6 +31,10 @@ export class JwtAccessGuard implements CanActivate {
   async canActivate(context: ExecutionContext) {
     try {
       const request = context.switchToHttp().getRequest();
+      Logger.log(
+        `Received request: ${request.method} ${request.url} ${request.cookies['access_token']}`,
+      );
+
       const access_token = request.cookies['access_token'];
 
       // access_token 유무 확인
