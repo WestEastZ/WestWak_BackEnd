@@ -17,12 +17,7 @@ import { JwtAccessGuard } from './token/jwt-access.guard';
     JwtModule.registerAsync({
       inject: [ConfigService],
       global: true,
-      useFactory: (config: ConfigService) => ({
-        // secret: config.get<string>('JWT_ACCESS_TOKEN'),
-        // signOptions: {
-        //   expiresIn: config.get<string>('JWT_ACCESS_TOKEN_EXPIRATION_TIME'),
-        // },
-      }),
+      useFactory: (config: ConfigService) => ({}),
     }),
     TypeOrmModule.forFeature([User]),
   ],

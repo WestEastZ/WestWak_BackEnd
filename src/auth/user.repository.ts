@@ -38,4 +38,23 @@ export class UserRepository extends Repository<User> {
       }
     }
   }
+
+  // kakao 회원가입
+  async createKakaoUser({ email, name, password }) {
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const user = this.create({ username: email, password: hashedPassword });
+
+    try {
+      await this.save(user);
+      return { email, message: '회원가입 되었습니다.' };
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException('Existing username');
+      } else {
+        throw new InternalServerErrorException();
+      }
+    }
+  }
 }

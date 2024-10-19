@@ -19,6 +19,7 @@ export class AuthService {
 
   // 로그인
   async signin(UserDto: UserDto): Promise<{
+    id: number;
     username: string;
     accessToken: string;
     refreshToken: string;
@@ -44,6 +45,7 @@ export class AuthService {
       );
 
       return {
+        id: user.id,
         username,
         accessToken,
         refreshToken,
@@ -61,5 +63,20 @@ export class AuthService {
     });
 
     return verifiedUser;
+  }
+
+  // kakao
+  async kakaoLogin(kakaoUser: any) {
+    const { email, name, password } = kakaoUser;
+
+    let user = await this.UserRepository.findOne({ where: email });
+
+    // if (!user) {
+    //   user = await this.UserRepository.createKakaoUser({
+    //     email,
+    //     name,
+    //     password,
+    //   });
+    // }
   }
 }
