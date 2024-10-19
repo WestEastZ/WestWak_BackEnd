@@ -16,9 +16,10 @@ export class BoardsService {
 
   // 모든 게시물 조회
   async getBoards(page: number): Promise<GetBoardsDto> {
-    const pageSize = 2;
+    const pageSize = 5;
 
     const [boards, total] = await this.BoardRepository.findAndCount({
+      order: { createdAt: 'DESC' },
       // 가져올 게시글의 갯수
       take: pageSize,
 
@@ -37,7 +38,7 @@ export class BoardsService {
 
   // 나의 게시물 조회
   async getMyBoards(user: User, page: number): Promise<GetBoardsDto> {
-    const pageSize = 2;
+    const pageSize = 1;
     const userId = user.id;
 
     const [boards, total] = await this.BoardRepository.findAndCount({
@@ -61,7 +62,7 @@ export class BoardsService {
   }
 
   // 게시물 삭제
-  deleteBoard(id: number): Promise<void> {
+  deleteBoard(id: number): Promise<Board> {
     return this.BoardRepository.deleteBoard(id);
   }
 }

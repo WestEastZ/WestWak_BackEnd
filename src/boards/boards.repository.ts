@@ -4,6 +4,7 @@ import { Board } from './entity/board.entity';
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { User } from 'src/auth/entity/user.entity';
@@ -17,11 +18,24 @@ export class BoardRepository extends Repository<Board> {
   // 게시물 생성
   async createBoard(BoardDto: BoardDto, user: User): Promise<Board> {
     try {
-      const { description } = BoardDto;
+      const { description, status } = BoardDto;
+      Logger.log(status);
+
+      const utcDate = new Date();
+
+      const kstDate = new Date(utcDate.getTime() + 9 * 60 * 60 * 1000);
+
+      const formattedDateTime = kstDate
+        .toISOString()
+        .replace('T', ' ')
+        .slice(0, 16);
 
       const board = this.create({
+        username: user.username,
+        userId: user.id,
         description,
-        status: 'PUBLIC',
+        status,
+        createdAt: formattedDateTime,
         user,
       });
 
@@ -49,7 +63,7 @@ export class BoardRepository extends Repository<Board> {
   }
 
   // 게시물 삭제
-  async deleteBoard(id: number): Promise<void> {
+  async deleteBoard(id: number): Promise<Board> {
     const board = await this.findOne({ where: { id } });
 
     if (!board) {
@@ -58,5 +72,7 @@ export class BoardRepository extends Repository<Board> {
 
     // 논리적 삭제
     await this.softDelete(id);
+
+    return board;
   }
 }
