@@ -1,12 +1,18 @@
 import { Module } from '@nestjs/common';
 
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { typeORMConfig } from './config/typeorm.config';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { User } from './auth/entity/user.entity';
 import { BoardsModule } from './boards/boards.module';
 import { Board } from './boards/entity/board.entity';
+import { ScrapingModule } from './scraping/scraping.module';
+import { RecomendVideoModule } from './recomend-video/recomend-video.module';
+import { Top100Module } from './top100/top100.module';
+import { Top100 } from './top100/entity/top100.entity';
+import { InformationModule } from './information/information.module';
+import { Information } from './information/entity/infomation.entity';
+import { Awss3Module } from './awss3/awss3.module';
 
 @Module({
   imports: [
@@ -21,11 +27,22 @@ import { Board } from './boards/entity/board.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [__dirname + '/../**/*.entity.{js.ts}', User, Board],
+      entities: [
+        __dirname + '/../**/*.entity.{js.ts}',
+        User,
+        Board,
+        Top100,
+        Information,
+      ],
       synchronize: true,
     }),
     AuthModule,
     BoardsModule,
+    ScrapingModule,
+    RecomendVideoModule,
+    Top100Module,
+    InformationModule,
+    Awss3Module,
   ],
 })
 export class AppModule {}
