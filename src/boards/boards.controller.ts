@@ -33,8 +33,6 @@ export class BoardsController {
     @Body() BoardDto: BoardDto,
     @GetUser() user: User,
   ): Promise<Board> {
-    console.log('Received request body:', JSON.stringify(BoardDto));
-    console.log('Board Dto', BoardDto);
     return this.BoardsService.createBoard(BoardDto, user);
   }
 

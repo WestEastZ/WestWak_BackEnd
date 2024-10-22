@@ -104,7 +104,6 @@ export class AuthController {
   async user(@Req() req: any, @Res() res: Response) {
     const username = req.user.username;
     const verifiedUser: User = await this.AuthService.findUser(username);
-    console.log(verifiedUser);
 
     return res.send(verifiedUser);
   }

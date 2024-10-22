@@ -19,7 +19,6 @@ export class BoardRepository extends Repository<Board> {
   async createBoard(BoardDto: BoardDto, user: User): Promise<Board> {
     try {
       const { description, status } = BoardDto;
-      Logger.log(status);
 
       const utcDate = new Date();
 
@@ -53,6 +52,10 @@ export class BoardRepository extends Repository<Board> {
   // 게시물 수정
   async updateBoard(id: number, BoardDto: BoardDto): Promise<Board> {
     const board = await this.findOne({ where: { id } });
+
+    if (!board) {
+      throw new NotFoundException('게시물을 찾을 수 없습니다.');
+    }
 
     board.description = BoardDto.description;
     board.status = BoardDto.status;

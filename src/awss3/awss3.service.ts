@@ -1,8 +1,11 @@
 import { ConfigService } from '@nestjs/config';
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import * as AWS from 'aws-sdk';
 import sharp from 'sharp';
-import { lookup } from 'mime-types';
 
 @Injectable()
 export class Awss3Service {
@@ -17,22 +20,23 @@ export class Awss3Service {
 
   // upload
   async uploadFileS3(file: Express.Multer.File) {
-    const optimizeImage = await this.optimizeImage(file.buffer);
-    const bucketName = this.ConfigService.get<string>('AWS_BUCKET_NAME');
-    const conetentType = lookup(file.originalname);
+    try {
+      const optimizeImage = await this.optimizeImage(file.buffer);
+      const bucketName = this.ConfigService.get<string>('AWS_BUCKET_NAME');
 
-    console.log(conetentType);
+      const data = {
+        Bucket: bucketName,
+        Key: `gomem/${file.originalname}`,
+        Body: optimizeImage,
+        ContentType: 'image/webp',
+      };
 
-    const data = {
-      Bucket: bucketName,
-      Key: `gomem/${file.originalname}`,
-      Body: optimizeImage,
-      ContentType: 'image/webp',
-    };
+      const result = await this.s3.upload(data).promise();
 
-    const result = await this.s3.upload(data).promise();
-
-    return result.Location;
+      return result.Location;
+    } catch (error) {
+      throw new InternalServerErrorException('파일을 업로드할 수 없습니다.');
+    }
   }
 
   // get Image Url
@@ -51,18 +55,34 @@ export class Awss3Service {
 
       const imageUrl = data.Contents.filter((url) =>
         imageRegex.test(url.Key),
-      ).map((object) => {
-        return `https://${bucketName}.s3.${region}.amazonaws.com/${object.Key}`;
-      });
+      ).map(
+        (object) =>
+          `https://${bucketName}.s3.${region}.amazonaws.com/${object.Key}`,
+      );
+
+      if (imageUrl.length === 0) {
+        throw new NotFoundException('이미지가 존재하지 않습니다.');
+      }
 
       return imageUrl;
     } catch (error) {
-      console.log(error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        '이미지 URL을 가져오는 중 오류가 발생했습니다.',
+      );
     }
   }
 
   // resize / optimize
   async optimizeImage(img: Buffer): Promise<Buffer> {
-    return sharp(img).resize(800).webp({ quality: 80 }).toBuffer();
+    try {
+      return sharp(img).resize(800).webp({ quality: 80 }).toBuffer();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        '이미지 최적화 중 오류가 발생했습니다.',
+      );
+    }
   }
 }
