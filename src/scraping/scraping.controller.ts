@@ -34,7 +34,6 @@ export class ScrapingController {
 
     try {
       const result = await this.ScrapingService.getTop100(url);
-      console.log('result :', result);
       return result;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);

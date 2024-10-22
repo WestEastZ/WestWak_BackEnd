@@ -1,5 +1,5 @@
 import { InformationDto } from './dto/information.dto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Information } from './entity/infomation.entity';
 
@@ -23,7 +23,9 @@ export class InfomationRepository extends Repository<Information> {
 
       await this.save(data);
     } catch (error) {
-      console.log(error);
+      throw new InternalServerErrorException(
+        '정보를 생성하는 중 오류가 발생했습니다.',
+      );
     }
   }
 }
