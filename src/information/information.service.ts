@@ -11,8 +11,10 @@ export class InformationService {
   }
 
   async getInformation(id: number) {
-    return await this.InfomationRepository.findOne({
+    const result = await this.InfomationRepository.findOne({
       where: { id },
     });
+
+    return result;
   }
 }
