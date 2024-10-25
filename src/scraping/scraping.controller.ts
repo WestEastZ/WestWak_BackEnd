@@ -13,13 +13,15 @@ export class ScrapingController {
   constructor(private ScrapingService: ScrapingService) {}
 
   @Get('/onair')
-  async getOnAirStatus(@Query('url') url: string) {
-    if (!url) {
+  async getOnAirStatus(@Query('ids') ids: string) {
+    if (!ids) {
       throw new HttpException('URL is required', HttpStatus.BAD_REQUEST);
     }
 
+    const streamerIds = ids.split(',');
+
     try {
-      const result = await this.ScrapingService.getBroadCastInfo(url);
+      const result = await this.ScrapingService.getBroadCastInfo(streamerIds);
       return result;
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
