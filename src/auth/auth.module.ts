@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtTokenService } from './token/jwt.service';
 import { JwtStrategy } from './token/jwt.strategy';
 import { JwtAccessGuard } from './token/jwt-access.guard';
+import { CookieService } from './cookie/cookie.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { JwtAccessGuard } from './token/jwt-access.guard';
     JwtTokenService,
     JwtStrategy,
     JwtAccessGuard,
+    CookieService,
   ],
   exports: [JwtStrategy, PassportModule, JwtAccessGuard],
 })

@@ -4,6 +4,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Post,
   Req,
   Res,
@@ -38,64 +39,34 @@ export class AuthController {
     @Body(ValidationPipe) UserDto: UserDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<any> {
-    const response = await this.AuthService.signin(UserDto);
+    const response = await this.AuthService.signin(UserDto, res);
 
-    res.cookie('access_token', `Bearer ${response.accessToken}`, {
-      httpOnly: true,
-      // sameSite: 'none',
-      // secure: true,
-      maxAge: 10000,
-      path: '/',
-    });
-
-    res.cookie('refresh_token', response.refreshToken, {
-      httpOnly: true,
-      // sameSite: 'none',
-      // secure: true,
-      maxAge: 6000000,
-      path: '/',
-    });
-
-    res.send({
+    return {
       id: response.id,
       username: response.username,
       access_token: response.accessToken,
       refresh_token: response.refreshToken,
       message: response.message,
-    });
+    };
   }
 
-  // kakao 로그인
-  @Get('/kakao')
-  @UseGuards(AuthGuard('kakao'))
-  async kakaoAuth(@Req() req) {}
+  // // kakao 로그인
+  // @Get('/kakao')
+  // @UseGuards(AuthGuard('kakao'))
+  // async kakaoAuth(@Req() req) {}
 
-  @Get('/auth/kakao/callback')
-  @UseGuards(AuthGuard('kakao'))
-  async kakaoAuthRedirect(@Req() req, @Res() res: Response) {}
+  // @Get('/auth/kakao/callback')
+  // @UseGuards(AuthGuard('kakao'))
+  // async kakaoAuthRedirect(@Req() req, @Res() res: Response) {}
 
   // 로그아웃
   @Post('/logout')
-  async logout(@Res() res: Response): Promise<any> {
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      // sameSite: 'none',
-      // secure: true,
-      maxAge: 10000,
-      path: '/',
-    });
+  async logout(@Res({ passthrough: true }) res: Response): Promise<any> {
+    await this.AuthService.logout(res);
 
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      // sameSite: 'none',
-      // secure: true,
-      maxAge: 6000000,
-      path: '/',
-    });
-
-    res.send({
+    return {
       message: '로그아웃 되었습니다.',
-    });
+    };
   }
 
   // 사용자 정보
