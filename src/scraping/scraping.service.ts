@@ -1,5 +1,8 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import * as puppeteer from 'puppeteer';
+import * as Defalutpuppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import { Page } from 'puppeteer-core';
+import Chromium from 'chrome-aws-lambda';
 
 export interface BroadcastInfo {
   id: string;
@@ -18,8 +21,26 @@ export class ScrapingService {
       timestamp: number;
     }
   >();
-
+  private readonly logger = new Logger(ScrapingService.name);
   private readonly CACHE_DURATION = 3600000;
+
+  private async createBrowser() {
+    if (process.env.NODE_ENV === 'production') {
+      this.logger.log('Starting browser in production mode');
+      return puppeteer.launch({
+        args: Chromium.args,
+        defaultViewport: Chromium.defaultViewport,
+        executablePath: await Chromium.executablePath,
+        headless: true,
+      });
+    } else {
+      this.logger.log('Starting browser in development mode');
+      return Defalutpuppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+    }
+  }
 
   // 생방송 정보
   async getBroadCastInfo(streamerIds: string[]): Promise<BroadcastInfo[]> {
@@ -44,10 +65,7 @@ export class ScrapingService {
   async scrapeMultipleStreamers(
     streamerIds: string[],
   ): Promise<BroadcastInfo[]> {
-    const brower = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    const browser = await this.createBrowser();
 
     try {
       // 최대 동시 요청 수 제한
@@ -59,7 +77,7 @@ export class ScrapingService {
 
         const chunkResult = await Promise.all(
           chunk.map(async (streamerId) => {
-            const page = await brower.newPage();
+            const page = (await browser.newPage()) as Page;
 
             try {
               await page.setRequestInterception(true);
@@ -97,7 +115,10 @@ export class ScrapingService {
               const isLive = await page.$('.onAir_box').then((res) => !!res);
 
               const broadCastThumb = await page
-                .$eval('.article_bj_box .bj_box .thum img', (img) => img.src)
+                .$eval(
+                  '.article_bj_box .bj_box .thum img',
+                  (img) => (img as HTMLImageElement).src,
+                )
                 .catch(() => null);
 
               const nickname = await page
@@ -139,7 +160,7 @@ export class ScrapingService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     } finally {
-      await brower.close();
+      await browser.close();
     }
   }
 
@@ -147,7 +168,7 @@ export class ScrapingService {
   async getTop100(url: string) {
     let browser;
     try {
-      browser = await puppeteer.launch({
+      browser = await Defalutpuppeteer.launch({
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
       });
