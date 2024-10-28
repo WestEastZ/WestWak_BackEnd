@@ -22,12 +22,11 @@ export class JwtRfreshGuard implements CanActivate {
     try {
       const request = context.switchToHttp().getRequest();
       Logger.log(
-        `Received request: ${request.method} ${request.url} ${request.cookies['refresh_token']}`,
+        `Received request: ${request.method} ${request.url} ${request.headers.authorization}`,
       );
 
       // const refresh_token = request.cookies['refresh_token'];
       const refresh_token = request.headers.authorization;
-      Logger.log(refresh_token);
 
       // refresh_token 유무 확인
       if (!refresh_token) {
@@ -58,7 +57,7 @@ export class JwtRfreshGuard implements CanActivate {
 
       return isMatch;
     } catch (error) {
-      throw new UnauthorizedException('error' + 'Invalid refresh token');
+      throw new UnauthorizedException('Invalid refresh token', error);
     }
   }
 }

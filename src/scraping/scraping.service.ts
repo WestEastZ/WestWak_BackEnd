@@ -1,80 +1,145 @@
-import { QuerySelectorAll } from './../../node_modules/puppeteer-core/lib/cjs/puppeteer/common/QueryHandler.d';
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { val } from 'cheerio/dist/commonjs/api/attributes';
 import * as puppeteer from 'puppeteer';
-import { timeout } from 'rxjs';
+
+export interface BroadcastInfo {
+  id: string;
+  isLive: boolean;
+  status: string;
+  nickname: string;
+  broadCastThumb: string;
+}
 
 @Injectable()
 export class ScrapingService {
+  private cache = new Map<
+    string,
+    {
+      data: BroadcastInfo[];
+      timestamp: number;
+    }
+  >();
+
+  private readonly CACHE_DURATION = 3600000;
+
   // 생방송 정보
-  async getBroadCastInfo(url: string): Promise<{
-    isLive: boolean;
-    status: string;
-    nickname: string;
-    broadCastThumb: string;
-  }> {
-    let browser;
+  async getBroadCastInfo(streamerIds: string[]): Promise<BroadcastInfo[]> {
+    const cacheKey = streamerIds.join(',');
+    const cached = this.cache.get(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      return cached.data;
+    }
+
+    const data = await this.scrapeMultipleStreamers(streamerIds);
+
+    this.cache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+    });
+
+    return data;
+  }
+
+  // 스트리머 별 방송 정보 가져오기
+  async scrapeMultipleStreamers(
+    streamerIds: string[],
+  ): Promise<BroadcastInfo[]> {
+    const brower = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
     try {
-      browser = await puppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      });
+      // 최대 동시 요청 수 제한
+      const MAX_CONCURRENT = 3;
+      const results = [];
 
-      const page = await browser.newPage();
+      for (let i = 0; i < streamerIds.length; i += MAX_CONCURRENT) {
+        const chunk = streamerIds.slice(i, i + MAX_CONCURRENT);
 
-      await page.setRequestInterception(true);
-      page.on('request', (req) => {
-        if (['stylesheet', 'font'].includes(req.resourceType())) {
-          req.abort();
-        } else {
-          req.continue();
-        }
-      });
+        const chunkResult = await Promise.all(
+          chunk.map(async (streamerId) => {
+            const page = await brower.newPage();
 
-      await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+            try {
+              await page.setRequestInterception(true);
+              page.on('request', (req) => {
+                if (['stylesheet', 'font'].includes(req.resourceType())) {
+                  req.abort();
+                } else {
+                  req.continue();
+                }
+              });
 
-      await Promise.all([
-        page.waitForSelector('.onAir_box', { timeout: 5000 }).catch(() => {}),
-        page
-          .waitForSelector('.article_bj_box .bj_box .thum img', {
-            timeout: 5000,
-          })
-          .catch(() => {}),
-        page.waitForSelector('.article_bj_box .bj_box .info_box .nick h2', {
-          timeout: 5000,
-        }),
-      ]);
+              const url = `https://ch.sooplive.co.kr/${streamerId}`;
+              await page.goto(url, {
+                waitUntil: 'networkidle0',
+                timeout: 30000,
+              });
 
-      // 방송 여부
-      const isLive = await page.$('.onAir_box').then((res) => !!res);
+              await Promise.all([
+                page
+                  .waitForSelector('.onAir_box', { timeout: 5000 })
+                  .catch(() => {}),
+                page
+                  .waitForSelector('.article_bj_box .bj_box .thum img', {
+                    timeout: 5000,
+                  })
+                  .catch(() => {}),
+                page.waitForSelector(
+                  '.article_bj_box .bj_box .info_box .nick h2',
+                  {
+                    timeout: 5000,
+                  },
+                ),
+              ]);
 
-      // 방송국 썸네일
-      const broadCastThumb = await page
-        .$eval('.article_bj_box .bj_box .thum img', (img) => img.src)
-        .catch(() => null);
+              const isLive = await page.$('.onAir_box').then((res) => !!res);
 
-      const nickname = await page
-        .$eval(
-          '.article_bj_box .bj_box .info_box .nick h2',
-          (h2) => h2.innerText || '',
-        )
-        .catch(() => null);
+              const broadCastThumb = await page
+                .$eval('.article_bj_box .bj_box .thum img', (img) => img.src)
+                .catch(() => null);
 
-      return {
-        isLive,
-        status: isLive ? 'On Air' : 'Off Air',
-        nickname,
-        broadCastThumb: broadCastThumb || undefined,
-      };
+              const nickname = await page
+                .$eval(
+                  '.article_bj_box .bj_box .info_box .nick h2',
+                  (h2) => h2.innerText || '',
+                )
+                .catch(() => null);
+
+              return {
+                id: streamerId,
+                isLive,
+                status: isLive ? 'On Air' : 'Off Air',
+                nickname,
+                broadCastThumb: broadCastThumb || 'undefined',
+              };
+            } catch (error) {
+              console.error(`Error scraping ${streamerId}:`, error);
+              // 에러 발생 시 기본값 반환
+              return {
+                id: streamerId,
+                isLive: false,
+                status: 'Off Air',
+                nickname: 'undefined',
+                broadCastThumb: 'undefined',
+              };
+            } finally {
+              await page.close();
+            }
+          }),
+        );
+        results.push(...chunkResult);
+      }
+
+      return results;
     } catch (error) {
       throw new HttpException(
         `스크래핑 실패: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     } finally {
-      if (browser) {
-        await browser.close();
-      }
+      await brower.close();
     }
   }
 
@@ -139,43 +204,3 @@ export class ScrapingService {
     }
   }
 }
-
-//  // table
-//   const tableData = await page.$eval('#tb', (table) => {
-//     const result = {};
-//     // rows
-//     const rows = table.QuerySelectorAll('tr');
-
-//     // cells
-//     rows.forEach((row) => {
-//       const cells = row.QuerySelectorAll('td');
-//       if (cells.length < 2) return;
-
-//       const key = cells[0].innerText;
-//       console.log('key :', key);
-//       let lowestValue: number | null = null;
-
-//       for (let i = 1; i < cells.length; i++) {
-//         let cellText = cells[i].inneText;
-//         console.log(cellText);
-
-//         if (cellText !== '') {
-//           const value = cellText;
-//           if (
-//             !isNaN(value) &&
-//             (lowestValue === null || value < lowestValue)
-//           ) {
-//             lowestValue = value;
-//           }
-//         }
-//       }
-
-//       result[key] = lowestValue;
-//     });
-
-//     Logger.log(result);
-
-//     return result;
-//   });
-
-//   return tableData;
