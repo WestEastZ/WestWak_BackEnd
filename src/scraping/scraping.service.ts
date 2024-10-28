@@ -24,24 +24,6 @@ export class ScrapingService {
   private readonly logger = new Logger(ScrapingService.name);
   private readonly CACHE_DURATION = 3600000;
 
-  private async createBrowser() {
-    if (process.env.NODE_ENV === 'production') {
-      this.logger.log('Starting browser in production mode');
-      return puppeteer.launch({
-        args: Chromium.args,
-        defaultViewport: Chromium.defaultViewport,
-        executablePath: await Chromium.executablePath,
-        headless: true,
-      });
-    } else {
-      this.logger.log('Starting browser in development mode');
-      return Defalutpuppeteer.launch({
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      });
-    }
-  }
-
   // 생방송 정보
   async getBroadCastInfo(streamerIds: string[]): Promise<BroadcastInfo[]> {
     const cacheKey = streamerIds.join(',');
@@ -59,6 +41,25 @@ export class ScrapingService {
     });
 
     return data;
+  }
+
+  // Browser 생성
+  private async createBrowser() {
+    if (process.env.NODE_ENV === 'production') {
+      this.logger.log('Starting browser in production mode');
+      return puppeteer.launch({
+        args: Chromium.args,
+        defaultViewport: Chromium.defaultViewport,
+        executablePath: await Chromium.executablePath,
+        headless: true,
+      });
+    } else {
+      this.logger.log('Starting browser in development mode');
+      return Defalutpuppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+    }
   }
 
   // 스트리머 별 방송 정보 가져오기
