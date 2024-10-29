@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import * as Defalutpuppeteer from 'puppeteer';
 import puppeteer from 'puppeteer-core';
 import { Page } from 'puppeteer-core';
-import Chromium from 'chrome-aws-lambda';
+import Chromium from '@sparticuz/chromium';
 
 export interface BroadcastInfo {
   id: string;
@@ -47,11 +47,14 @@ export class ScrapingService {
   private async createBrowser() {
     if (process.env.NODE_ENV === 'production') {
       this.logger.log('Starting browser in production mode');
+
+      const executable = await Chromium.executablePath();
+
       return puppeteer.launch({
         args: Chromium.args,
         defaultViewport: Chromium.defaultViewport,
-        executablePath: await Chromium.executablePath,
-        headless: true,
+        executablePath: executable,
+        headless: Chromium.headless,
       });
     } else {
       this.logger.log('Starting browser in development mode');
