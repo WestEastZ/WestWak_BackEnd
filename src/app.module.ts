@@ -34,7 +34,7 @@ import { Awss3Module } from './awss3/awss3.module';
         Top100,
         Information,
       ],
-      synchronize: true,
+      synchronize: false,
     }),
     AuthModule,
     BoardsModule,
