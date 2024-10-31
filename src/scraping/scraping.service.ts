@@ -9,7 +9,7 @@ export interface BroadcastInfo {
   isLive: boolean;
   status: string;
   nickname: string;
-  broadCastThumb: string;
+  broadCastThumb: string | null;
 }
 
 @Injectable()
@@ -86,7 +86,11 @@ export class ScrapingService {
             try {
               await page.setRequestInterception(true);
               page.on('request', (req) => {
-                if (['stylesheet', 'font'].includes(req.resourceType())) {
+                if (
+                  ['stylesheet', 'font', 'media', 'image'].includes(
+                    req.resourceType(),
+                  )
+                ) {
                   req.abort();
                 } else {
                   req.continue();
@@ -95,65 +99,40 @@ export class ScrapingService {
 
               const url = `https://ch.sooplive.co.kr/${streamerId}`;
               await page.goto(url, {
-                waitUntil: 'networkidle0',
+                waitUntil: 'networkidle2',
                 timeout: 30000,
               });
 
-              await Promise.all([
-                page
-                  .waitForSelector('.onAir_box', { timeout: 5000 })
-                  .catch(() => {}),
-                page
-                  .waitForSelector('.article_bj_box .bj_box .thum img', {
-                    timeout: 5000,
-                  })
-                  .catch(() => {}),
-                page.waitForSelector(
-                  '.article_bj_box .bj_box .info_box .nick h2',
-                  {
-                    timeout: 5000,
-                  },
-                ),
-              ]);
+              await page.waitForSelector('.onAir_box', { timeout: 5000 });
 
-              const isLive = await page.$('.onAir_box').then((res) => !!res);
-
-              const broadCastThumb = await page
-                .$eval(
-                  '.article_bj_box .bj_box .thum img',
-                  (img) => (img as HTMLImageElement).src,
-                )
-                .catch(() => null);
-
-              const nickname = await page
-                .$eval(
-                  '.article_bj_box .bj_box .info_box .nick h2',
-                  (h2) => h2.innerText || '',
-                )
-                .catch(() => null);
+              const isLive = await page
+                .$('.onAir_box')
+                .then((res) => !!res)
+                .catch(() => false);
 
               return {
                 id: streamerId,
                 isLive,
                 status: isLive ? 'On Air' : 'Off Air',
-                nickname,
-                broadCastThumb: broadCastThumb || 'undefined',
+                nickname: streamerId,
+                broadCastThumb: null,
               };
             } catch (error) {
               console.error(`Error scraping ${streamerId}:`, error);
-              // 에러 발생 시 기본값 반환
+
               return {
                 id: streamerId,
                 isLive: false,
                 status: 'Off Air',
-                nickname: 'undefined',
-                broadCastThumb: 'undefined',
+                nickname: streamerId,
+                broadCastThumb: null,
               };
             } finally {
               await page.close();
             }
           }),
         );
+
         results.push(...chunkResult);
       }
 

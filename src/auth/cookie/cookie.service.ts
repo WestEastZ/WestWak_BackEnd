@@ -8,11 +8,15 @@ export class CookieService {
   private readonly COOKIE_CONFIG = {
     ACCESS_TOKEN: {
       httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
       maxAge: 10000,
       path: '/',
     },
     REFRESH_TOKEN: {
       httpOnly: true,
+      secure: true,
+      sameSite: 'none' as const,
       maxAge: 6000000,
       path: '/',
     },
