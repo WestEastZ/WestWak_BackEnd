@@ -65,8 +65,8 @@ export class AuthService {
           },
         );
 
-        // Cookie
-        this.CookieService.setAuthCookie(res, { accessToken, refreshToken });
+        this.CookieService.setAccessTokenCookie(res, accessToken);
+        this.CookieService.setRefreshTokenCookie(res, refreshToken);
 
         return {
           id: user.id,
@@ -86,6 +86,7 @@ export class AuthService {
     }
   }
 
+  // 로그아웃
   async logout(res: Response) {
     try {
       this.CookieService.clearAuthCookies(res);
@@ -114,18 +115,23 @@ export class AuthService {
     }
   }
 
-  // kakao
-  // async kakaoLogin(kakaoUser: any) {
-  //   const { email, name, password } = kakaoUser;
+  // access token 재발급
+  async getNewAccessToken(username: string, res: Response) {
+    try {
+      const newAccessToken =
+        await this.JwtTokenService.getAccessToken(username);
 
-  //   let user = await this.UserRepository.findOne({ where: email });
+      this.CookieService.setAccessTokenCookie(res, newAccessToken);
 
-  // if (!user) {
-  //   user = await this.UserRepository.createKakaoUser({
-  //     email,
-  //     name,
-  //     password,
-  //   });
-  // }
-  // }
+      return {
+        message: 'new Access Token',
+        access_token: `Bearer ${newAccessToken}`,
+      };
+    } catch (error) {
+      throw new HttpException(
+        'Refresh Token 재발급 중 오류가 발생했습니다.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

@@ -20,10 +20,7 @@ import { GetUser } from './decorator/getUser.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private AuthService: AuthService,
-    private JwtTokenService: JwtTokenService,
-  ) {}
+  constructor(private AuthService: AuthService) {}
 
   // 회원가입
   @Post('/signup')
@@ -49,15 +46,6 @@ export class AuthController {
       message: response.message,
     };
   }
-
-  // // kakao 로그인
-  // @Get('/kakao')
-  // @UseGuards(AuthGuard('kakao'))
-  // async kakaoAuth(@Req() req) {}
-
-  // @Get('/auth/kakao/callback')
-  // @UseGuards(AuthGuard('kakao'))
-  // async kakaoAuthRedirect(@Req() req, @Res() res: Response) {}
 
   // 로그아웃
   @Post('/logout')
@@ -97,19 +85,11 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @GetUser() user: User,
   ) {
-    const newAccessToken = await this.JwtTokenService.getAccessToken(
-      user.username,
-    );
-
-    res.cookie('access_token', `Bearer ${newAccessToken}`, {
-      httpOnly: true,
-      maxAge: 10000,
-      path: '/',
-    });
+    const result = await this.AuthService.getNewAccessToken(user.username, res);
 
     res.send({
-      message: 'new Access Token',
-      access_token: `Bearer ${newAccessToken}`,
+      message: result.message,
+      access_token: result.access_token,
     });
   }
 }
