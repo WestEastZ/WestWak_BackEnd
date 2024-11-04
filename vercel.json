@@ -18,7 +18,7 @@
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://wakvideo.vercel.app"
+          "value": "https://www.wakvideo.shop"
         },
         {
           "key": "Access-Control-Allow-Credentials",
