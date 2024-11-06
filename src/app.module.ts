@@ -13,6 +13,7 @@ import { Top100 } from './top100/entity/top100.entity';
 import { InformationModule } from './information/information.module';
 import { Information } from './information/entity/infomation.entity';
 import { Awss3Module } from './awss3/awss3.module';
+import { BroadCastModule } from './broadcast/broad-cast.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { Awss3Module } from './awss3/awss3.module';
     Top100Module,
     InformationModule,
     Awss3Module,
+    BroadCastModule,
   ],
 })
 export class AppModule {}
