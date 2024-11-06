@@ -24,7 +24,18 @@ export class InformationController {
     const information = await this.InformationService.getInformation(id);
 
     if (!information) {
-      throw new NotFoundException(`${id}의 게시물을 찾을 수 없습니다.`);
+      throw new NotFoundException(`${id}의 노래 정보를 찾을 수 없습니다.`);
+    }
+
+    return information;
+  }
+
+  @Get('/all')
+  async getAllInformation() {
+    const information = await this.InformationService.getAllInformattion();
+
+    if (!information) {
+      throw new NotFoundException(`노래 정보를 찾을 수 없습니다.`);
     }
 
     return information;

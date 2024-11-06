@@ -17,4 +17,12 @@ export class InformationService {
 
     return result;
   }
+
+  async getAllInformattion() {
+    const result = await this.InfomationRepository.find({
+      select: ['id', 'title', 'artist'],
+    });
+
+    return result;
+  }
 }
