@@ -18,6 +18,20 @@ export class Top100Repository extends Repository<Top100> {
   async createTop100(Top100Dto: Top100Dto) {
     try {
       const { date, title, rank, isRanked } = Top100Dto;
+
+      // 같은 날짜의 데이터가 있는지 확인
+      const existingData = await this.findOne({
+        where: { date, title },
+      });
+
+      // 이미 존재하면 생성하지 않음
+      if (existingData) {
+        return {
+          success: false,
+          message: '해당 날짜의 데이터가 이미 존재합니다.',
+        };
+      }
+
       const information = await this.InfomationRepository.findOne({
         where: { title },
       });
