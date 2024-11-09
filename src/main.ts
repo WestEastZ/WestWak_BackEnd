@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
@@ -13,10 +13,10 @@ async function bootstrap() {
     origin: [LocalURL, BaseURL],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Authorization', 'Set-Cookie'],
   });
-  app.use(cookieParser.default());
+  app.use(cookieParser());
   await app.listen(port);
   Logger.log(`App ${port}`);
 }
