@@ -9,7 +9,7 @@ export class CookieService {
     ACCESS_TOKEN: {
       httpOnly: true,
       secure: true,
-      sameSite: 'none' as const,
+      sameSite: 'strict' as const,
       maxAge: 10000,
       domain: process.env.NODE_ENV === 'development' ? '' : '.wakvideo.shop',
       path: '/',
@@ -17,7 +17,7 @@ export class CookieService {
     REFRESH_TOKEN: {
       httpOnly: true,
       secure: true,
-      sameSite: 'none' as const,
+      sameSite: 'strict' as const,
       maxAge: 6000000,
       domain: process.env.NODE_ENV === 'development' ? '' : '.wakvideo.shop',
       path: '/',
@@ -41,7 +41,7 @@ export class CookieService {
   }
 
   clearAuthCookies(res: Response) {
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
+    res.clearCookie('access_token', this.COOKIE_CONFIG.ACCESS_TOKEN);
+    res.clearCookie('refresh_token', this.COOKIE_CONFIG.REFRESH_TOKEN);
   }
 }
