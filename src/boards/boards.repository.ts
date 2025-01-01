@@ -27,7 +27,7 @@ export class BoardRepository extends Repository<Board> {
       const formattedDateTime = kstDate
         .toISOString()
         .replace('T', ' ')
-        .slice(0, 16);
+        .slice(0, 19);
 
       const board = this.create({
         username: user.username,

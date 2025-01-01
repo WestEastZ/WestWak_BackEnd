@@ -61,8 +61,9 @@ export class AuthController {
   @Get('/user')
   @UseGuards(AuthGuard('jwt'))
   async user(@Req() req: any, @Res() res: Response) {
-    const username = req.user.username;
-    const verifiedUser: User = await this.AuthService.findUser(username);
+    const user = req.user;
+
+    const verifiedUser: User = await this.AuthService.findUser(user);
 
     return res.send(verifiedUser);
   }
@@ -73,6 +74,8 @@ export class AuthController {
   async authenticate(@Req() req: any, @Res() res: Response) {
     return res.status(200).send({
       username: req.user.username,
+      userId: req.user.id,
+      provider: req.user.provider,
       message: 'authenticate',
     });
   }
@@ -85,11 +88,64 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @GetUser() user: User,
   ) {
-    const result = await this.AuthService.getNewAccessToken(user.username, res);
+    const result = await this.AuthService.getNewAccessToken(user, res);
 
     res.send({
       message: result.message,
       access_token: result.access_token,
     });
+  }
+
+  // 카카오 로그인
+  @Post('/kakao')
+  async kakakoCallback(
+    @Body('code') code: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const response = await this.AuthService.kakaoLogin(code, res);
+    return {
+      id: response.id,
+      username: response.username,
+      access_token: response.accessToken,
+      refresh_token: response.refreshToken,
+      message: response.message,
+    };
+  }
+
+  // 구글 로그인
+  @Post('/google')
+  async googleCallback(
+    @Body('code') code: string,
+    @Res({ passthrough: true }) res: Response,
+    @GetUser() user: User,
+  ) {
+    const response = await this.AuthService.googleLogin(code, res);
+
+    return {
+      id: response.id,
+      username: response.username,
+      access_token: response.accessToken,
+      refresh_token: response.refreshToken,
+      provider: response.provider,
+      message: response.message,
+    };
+  }
+
+  @Post('/github')
+  async githubCallback(
+    @Body('code') code: string,
+    @Res({ passthrough: true }) res: Response,
+    @GetUser() user: User,
+  ) {
+    const response = await this.AuthService.githubLogin(code, res);
+
+    return {
+      id: response.id,
+      username: response.username,
+      access_token: response.accessToken,
+      refresh_token: response.refreshToken,
+      provider: response.provider,
+      message: response.message,
+    };
   }
 }

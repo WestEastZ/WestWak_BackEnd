@@ -18,6 +18,7 @@ export class CookieService {
       httpOnly: true,
       secure: true,
       sameSite: 'strict' as const,
+      // maxAge: 20000,
       maxAge: 6000000,
       domain: process.env.NODE_ENV === 'development' ? '' : '.wakvideo.shop',
       path: '/',
