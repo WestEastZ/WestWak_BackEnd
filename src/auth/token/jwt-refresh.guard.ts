@@ -42,7 +42,11 @@ export class JwtRfreshGuard implements CanActivate {
 
       // user 정보
       const user = await this.UserRepository.findOne({
-        where: { username: decodedToken.username },
+        where: {
+          username: decodedToken.username,
+          id: decodedToken.userId,
+          provider: decodedToken.provider,
+        },
       });
 
       // token 비교
